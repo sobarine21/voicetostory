@@ -12,6 +12,7 @@ from collections import Counter
 import os
 from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, ClientSettings
 import av
+import wave
 
 # Download necessary corpora for NLTK
 nltk.download('vader_lexicon')
@@ -22,27 +23,6 @@ API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-t
 # Retrieve API tokens from Streamlit secrets
 API_TOKEN = st.secrets["HUGGINGFACE_API_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
-
-# Function to cycle through available Gemini models and corresponding API keys
-def get_next_model_and_key():
-    """Cycle through available Gemini models and corresponding API keys."""
-    models_and_keys = [
-        ('gemini-1.5-flash', os.getenv("API_KEY_GEMINI_1_5_FLASH")),
-        ('gemini-2.0-flash', os.getenv("API_KEY_GEMINI_2_0_FLASH")),
-        ('gemini-1.5-flash-8b', os.getenv("API_KEY_GEMINI_1_5_FLASH_8B")),
-        ('gemini-2.0-flash-exp', os.getenv("API_KEY_GEMINI_2_0_FLASH_EXP")),
-    ]
-    for model, key in models_and_keys:
-        if key:
-            return model, key
-    return None, None
-
-# Retrieve and configure the generative AI API key
-model_name, GOOGLE_API_KEY = get_next_model_and_key()
-if GOOGLE_API_KEY is not None:
-    genai.configure(api_key=GOOGLE_API_KEY)
-else:
-    st.error("No valid API key found for any Gemini model.")
 
 # Function to send the audio file to the API
 def transcribe_audio(file):
@@ -149,9 +129,13 @@ if webrtc_ctx.audio_processor:
     audio_processor = webrtc_ctx.audio_processor
     if st.button("Stop Recording"):
         audio_frames = audio_processor.frames
-        with open("recorded_audio.wav", "wb") as f:
+        with wave.open("recorded_audio.wav", "wb") as f:
+            # Set parameters for the wave file (e.g., mono channel, 16-bit depth, 44.1 kHz)
+            f.setnchannels(1)
+            f.setsampwidth(2)  # 16-bit depth
+            f.setframerate(44100)
             for frame in audio_frames:
-                f.write(frame.to_ndarray().tobytes())
+                f.writeframes(frame.to_ndarray().tobytes())
         uploaded_file = open("recorded_audio.wav", "rb")
 
 if uploaded_file is not None:
