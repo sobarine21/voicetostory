@@ -10,6 +10,8 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 import langid
 from collections import Counter
 import os
+from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, ClientSettings
+import av
 
 # Download necessary corpora for NLTK
 nltk.download('vader_lexicon')
@@ -116,12 +118,41 @@ def generate_word_cloud(text):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     return wordcloud
 
+# Custom audio processor to save audio frames
+class AudioProcessor(AudioProcessorBase):
+    def __init__(self) -> None:
+        self.frames = []
+    
+    def recv_audio(self, frame: av.AudioFrame) -> av.AudioFrame:
+        self.frames.append(frame)
+        return frame
+
 # Streamlit UI
 st.title("🎙️ Voice to Story Creator")
-st.write("Upload an audio file, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
+st.write("Upload or record an audio file, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"])
+
+# Audio recording
+st.subheader("Or record your audio")
+webrtc_ctx = webrtc_streamer(
+    key="audio",
+    mode=WebRtcMode.SENDONLY,
+    client_settings=ClientSettings(
+        media_stream_constraints={"audio": True},
+    ),
+    audio_processor_factory=AudioProcessor,
+)
+
+if webrtc_ctx.audio_processor:
+    audio_processor = webrtc_ctx.audio_processor
+    if st.button("Stop Recording"):
+        audio_frames = audio_processor.frames
+        with open("recorded_audio.wav", "wb") as f:
+            for frame in audio_frames:
+                f.write(frame.to_ndarray().tobytes())
+        uploaded_file = open("recorded_audio.wav", "rb")
 
 if uploaded_file is not None:
     # Display uploaded audio
