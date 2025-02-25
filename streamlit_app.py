@@ -248,7 +248,7 @@ if uploaded_file is not None:
         if st.button("Generate Story"):
             try:
                 # Load and configure the model
-                model = genai.GenerativeModel("openai/whisper-large-v3-turbo")
+                model = genai.GenerativeModel(model_name)
                 
                 # Generate response from the model
                 response = model.generate_content(prompt)
