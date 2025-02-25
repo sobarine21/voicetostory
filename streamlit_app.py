@@ -13,6 +13,7 @@ import os
 from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, RTCConfiguration
 import av
 import wave
+import asyncio
 
 # Download necessary corpora for NLTK
 nltk.download('vader_lexicon')
@@ -107,6 +108,14 @@ class AudioProcessor(AudioProcessorBase):
         self.frames.append(frame)
         return frame
 
+# Ensure the event loop is running
+def run_event_loop():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:  # No event loop is running
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
 # Streamlit UI
 st.title("🎙️ Voice to Story Creator")
 st.write("Upload or record an audio file, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
@@ -116,12 +125,14 @@ uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp
 
 # Audio recording
 st.subheader("Or record your audio")
+run_event_loop()
 webrtc_ctx = webrtc_streamer(
     key="audio",
     mode=WebRtcMode.SENDONLY,
-    client_settings=RTCConfiguration(
-        media_stream_constraints={"audio": True},
+    rtc_configuration=RTCConfiguration(
+        ice_servers=[{"urls": ["stun:stun.l.google.com:19302"]}]
     ),
+    media_stream_constraints={"audio": True},
     audio_processor_factory=AudioProcessor,
 )
 
