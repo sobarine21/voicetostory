@@ -10,7 +10,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 import langid
 from collections import Counter
 import os
-from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, ClientSettings
+from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, RTCConfiguration
 import av
 import wave
 
@@ -119,7 +119,7 @@ st.subheader("Or record your audio")
 webrtc_ctx = webrtc_streamer(
     key="audio",
     mode=WebRtcMode.SENDONLY,
-    client_settings=ClientSettings(
+    client_settings=RTCConfiguration(
         media_stream_constraints={"audio": True},
     ),
     audio_processor_factory=AudioProcessor,
