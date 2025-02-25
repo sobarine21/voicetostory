@@ -72,12 +72,15 @@ uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp
 
 # Audio recording
 st.subheader("Or record your audio")
+rtc_configuration = {
+    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+}
+
 webrtc_ctx = webrtc_streamer(
     key="audio",
     mode=WebRtcMode.SENDONLY,
-    client_settings=ClientSettings(
-        media_stream_constraints={"audio": True},
-    ),
+    rtc_configuration=rtc_configuration,
+    media_stream_constraints={"audio": True},
     audio_processor_factory=AudioProcessor,
 )
 
