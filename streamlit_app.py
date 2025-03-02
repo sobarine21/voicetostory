@@ -56,41 +56,54 @@ def generate_word_cloud(text):
     return wordcloud
 
 # Streamlit UI
-st.set_page_config(page_title="🎙️ Voice to Story Creator", layout="wide")
+st.set_page_config(page_title="🎙️ Voice to Story Creator", layout="centered")
 st.markdown(
     """
     <style>
     .main {
-        background: #0e1117;
+        background: #1d1f27;
         color: #ffffff;
     }
     h1 {
         color: #00adb5;
         text-align: center;
+        font-family: 'Roboto', sans-serif;
     }
     .stButton>button {
         background-color: #00adb5;
         color: #ffffff;
         border-radius: 8px;
         transition: background-color 0.3s, transform 0.3s;
+        padding: 10px 20px;
+        font-size: 16px;
     }
     .stButton>button:hover {
         background-color: #007b7f;
-        transform: scale(1.1);
+        transform: scale(1.05);
     }
     .stFileUploader {
         border: 2px dashed #00adb5;
         border-radius: 8px;
-        padding: 10px;
+        padding: 15px;
+        margin-top: 20px;
     }
     .stTextInput>div>input {
         border-radius: 8px;
+        padding: 10px;
     }
     .stAlert {
         font-size: 16px;
+        background-color: #33363d;
     }
     .stImage {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+    }
+    .stMarkdown {
+        color: #dddddd;
+    }
+    .stProgress {
+        background-color: #007b7f;
     }
     </style>
     """,
