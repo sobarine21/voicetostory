@@ -68,6 +68,7 @@ st.markdown(
         color: #00adb5;
         text-align: center;
         font-family: 'Roboto', sans-serif;
+        animation: fadeIn 1s ease-in-out;
     }
     .stButton>button {
         background-color: #00adb5;
@@ -86,6 +87,7 @@ st.markdown(
         border-radius: 8px;
         padding: 15px;
         margin-top: 20px;
+        animation: fadeInUp 1s ease-in-out;
     }
     .stTextInput>div>input {
         border-radius: 8px;
@@ -98,12 +100,21 @@ st.markdown(
     .stImage {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         margin-top: 20px;
+        animation: fadeInUp 1s ease-in-out;
     }
     .stMarkdown {
         color: #dddddd;
     }
     .stProgress {
         background-color: #007b7f;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     </style>
     """,
@@ -134,8 +145,10 @@ if uploaded_file is not None:
             if duration_seconds > MAX_DURATION_SECONDS:
                 st.error(f"Error: Audio duration exceeds the 2-minute limit. Your audio is {duration_seconds:.2f} seconds.")
             else:
-                # Add a loading animation while transcription happens
+                # Add a loading spinner while transcription happens
                 with st.spinner("Transcribing audio... Please wait."):
+                    time.sleep(2)  # Simulate waiting time
+                    
                     # Transcribe the uploaded audio file
                     result = transcribe_audio(uploaded_file)
 
@@ -199,18 +212,19 @@ if uploaded_file is not None:
 
                         # Let user decide if they want to use AI to generate a story
                         if st.button("Generate Story"):
-                            try:
-                                # Load and configure the model with Google's gemini-1.5-flash
-                                model = genai.GenerativeModel('gemini-1.5-flash')
-                                
-                                # Generate response from the model
-                                response = model.generate_content(prompt)
-                                
-                                # Display response in Streamlit
-                                st.write("Generated Story:")
-                                st.write(response.text)
-                            except Exception as e:
-                                st.error(f"Error: {e}")
+                            with st.spinner("Generating Story... Please wait."):
+                                try:
+                                    # Load and configure the model with Google's gemini-1.5-flash
+                                    model = genai.GenerativeModel('gemini-1.5-flash')
+                                    
+                                    # Generate response from the model
+                                    response = model.generate_content(prompt)
+                                    
+                                    # Display response in Streamlit
+                                    st.write("Generated Story:")
+                                    st.write(response.text)
+                                except Exception as e:
+                                    st.error(f"Error: {e}")
 
                     elif "error" in result:
                         st.error(f"Error: {result['error']}")
