@@ -56,49 +56,13 @@ def generate_word_cloud(text):
 
 # Streamlit UI setup with a tech theme
 st.set_page_config(page_title="Voice Notes Stories Enhanced by AI", page_icon="🎙️", layout="wide")
-st.markdown("""
-    <style>
-        body {
-            background-color: #1e1e1e;
-            color: #f5f5f5;
-        }
-        .stButton>button {
-            background-color: #6200ea;
-            color: white;
-            font-weight: bold;
-            border-radius: 12px;
-        }
-        .stButton>button:hover {
-            background-color: #3700b3;
-        }
-        .stTextArea textarea {
-            background-color: #333;
-            color: #fff;
-        }
-        .stFileUploader {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .stFileUploader input {
-            background-color: #333;
-            color: #fff;
-        }
-        h1 {
-            color: #6200ea;
-        }
-        .stProgress {
-            background-color: #6200ea;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 # UI Elements
 st.title("🎙️ Voice Notes Stories Enhanced by AI")
 st.write("Upload an audio file, and the app will transcribe it using OpenAI Whisper via Hugging Face API. It will also analyze the text and generate a creative story using Generative AI.")
 
 # File uploader with file size limit for 2 minutes (based on file duration and typical bitrates)
-uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"], label_visibility="collapsed")
+uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"])
 
 if uploaded_file is not None:
     # Estimate file duration for 2-minute limit
