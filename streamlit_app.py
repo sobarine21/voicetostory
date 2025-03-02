@@ -179,7 +179,7 @@ if uploaded_file is not None:
                         # Word Cloud Visualization
                         wordcloud = generate_word_cloud(transcription_text)
                         st.subheader("Word Cloud")
-                        st.image(wordcloud.to_array(), use_column_width=True)
+                        st.image(wordcloud.to_array(), use_container_width=True)
 
                         # Add download button for the transcription text
                         st.download_button(
