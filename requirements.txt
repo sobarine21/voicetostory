@@ -10,3 +10,4 @@ google-generativeai
 streamlit-webrtc
 av
 sounddevice
+pipwin
