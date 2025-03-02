@@ -126,7 +126,7 @@ st.markdown(
 
 # App Title
 st.title("🎙️ Voice to Story Creator")
-st.write("Upload an audio file (e.g., .wav, .flac, .mp3), and this app will transcribe it using OpenAI Whisper via Hugging Face API. Then, perform various analyses and generate a creative story.")
+st.write("Turn voice notes into AI generated stories.")
 
 # File uploader with file size limit (2 mins of audio)
 uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
