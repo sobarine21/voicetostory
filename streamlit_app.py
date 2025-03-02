@@ -126,7 +126,7 @@ st.markdown(
 
 # App Title
 st.title("🎙️ Voice to Story Creator")
-st.write("Turn voice notes into AI generated stories.")
+st.write("Turn voice notes into AI generated stories powered by OpenAI-whisper and Google generative AI.")
 
 # File uploader with file size limit (2 mins of audio)
 uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
