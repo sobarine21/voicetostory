@@ -52,22 +52,24 @@ def calculate_speech_rate(text, duration_seconds):
 
 # Function to generate a word cloud
 def generate_word_cloud(text):
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    wordcloud = WordCloud(width=800, height=400, background_color='black').generate(text)
     return wordcloud
 
-# Streamlit UI
+# Streamlit UI configuration
 st.set_page_config(page_title="🎙️ Voice to Story Creator", layout="centered")
 st.markdown(
     """
     <style>
     .main {
-        background: #1d1f27;
-        color: #ffffff;
+        background: #121212;
+        color: #eaeaea;
+        font-family: 'Roboto', sans-serif;
     }
     h1 {
         color: #00adb5;
         text-align: center;
-        font-family: 'Roboto', sans-serif;
+        font-size: 36px;
+        letter-spacing: 2px;
         animation: fadeIn 1s ease-in-out;
     }
     .stButton>button {
@@ -75,8 +77,8 @@ st.markdown(
         color: #ffffff;
         border-radius: 8px;
         transition: background-color 0.3s, transform 0.3s;
-        padding: 10px 20px;
-        font-size: 16px;
+        padding: 12px 20px;
+        font-size: 18px;
     }
     .stButton>button:hover {
         background-color: #007b7f;
@@ -86,7 +88,8 @@ st.markdown(
         border: 2px dashed #00adb5;
         border-radius: 8px;
         padding: 15px;
-        margin-top: 20px;
+        margin-top: 30px;
+        background: #1e1e1e;
         animation: fadeInUp 1s ease-in-out;
     }
     .stTextInput>div>input {
@@ -106,7 +109,7 @@ st.markdown(
         color: #dddddd;
     }
     .stProgress {
-        background-color: #007b7f;
+        background-color: #00adb5;
     }
     @keyframes fadeIn {
         from { opacity: 0; }
@@ -121,6 +124,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# App Title
 st.title("🎙️ Voice to Story Creator")
 st.write("Upload an audio file (e.g., .wav, .flac, .mp3), and this app will transcribe it using OpenAI Whisper via Hugging Face API. Then, perform various analyses and generate a creative story.")
 
