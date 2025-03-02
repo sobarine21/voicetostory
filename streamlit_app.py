@@ -51,33 +51,40 @@ def calculate_speech_rate(text, duration_seconds):
 
 # Function to generate a word cloud
 def generate_word_cloud(text):
-    wordcloud = WordCloud(width=800, height=400, background_color='black', colormap='coolwarm').generate(text)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     return wordcloud
 
-# Streamlit UI setup with a tech theme
-st.set_page_config(page_title="Voice Notes Stories Enhanced by AI", page_icon="🎙️", layout="wide")
+# Streamlit UI
+st.set_page_config(page_title="🎙️ Voice to Story Creator", layout="wide")
+st.title("🎙️ Voice to Story Creator")
+st.write("Upload an audio file (e.g., .wav, .flac, .mp3), and this app will transcribe it using OpenAI Whisper via Hugging Face API. Then, perform various analyses and generate a creative story.")
 
-# UI Elements
-st.title("🎙️ Voice Notes Stories Enhanced by AI")
-st.write("Upload an audio file, and the app will transcribe it using OpenAI Whisper via Hugging Face API. It will also analyze the text and generate a creative story using Generative AI.")
+# File uploader with file size limit (2 mins of audio)
+uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
 
-# File uploader with file size limit for 2 minutes (based on file duration and typical bitrates)
-uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"])
+# Limit audio to 2 minutes
+MAX_DURATION_SECONDS = 120  # 2 minutes
 
 if uploaded_file is not None:
-    # Estimate file duration for 2-minute limit
+    # Display uploaded audio
+    st.audio(uploaded_file, format="audio/mp3", start_time=0)
+
+    # Checking the duration of the audio file
     try:
-        with wave.open(uploaded_file, 'rb') as audio_file:
-            duration_seconds = audio_file.getnframes() / audio_file.getframerate()
-            if duration_seconds > 120:
-                st.error("The audio file exceeds the 2-minute limit. Please upload a shorter file.")
+        audio = uploaded_file.getvalue()
+        with wave.open(io.BytesIO(audio), 'rb') as audio_file:
+            framerate = audio_file.getframerate()
+            frames = audio_file.getnframes()
+            duration_seconds = frames / float(framerate)
+            
+            if duration_seconds > MAX_DURATION_SECONDS:
+                st.error(f"Error: Audio duration exceeds the 2-minute limit. Your audio is {duration_seconds:.2f} seconds.")
             else:
-                st.audio(uploaded_file, format="audio/mp3", start_time=0)
                 st.info("Transcribing audio... Please wait.")
-                
+
                 # Transcribe the uploaded audio file
                 result = transcribe_audio(uploaded_file)
-                
+
                 # Display the result
                 if "text" in result:
                     st.success("Transcription Complete:")
@@ -98,7 +105,7 @@ if uploaded_file is not None:
                     try:
                         speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
                         st.subheader("Speech Rate")
-                        st.write(f"Speech Rate: {speech_rate:.2f} words per minute")
+                        st.write(f"Speech Rate: {speech_rate} words per minute")
                     except ZeroDivisionError:
                         st.error("Error: The duration of the audio is zero, which caused a division by zero error.")
 
@@ -123,7 +130,7 @@ if uploaded_file is not None:
                     Keyword Extraction:
                     {keywords}
                     
-                    Speech Rate: {speech_rate:.2f} words per minute
+                    Speech Rate: {speech_rate} words per minute
                     """
                     st.download_button(
                         label="Download Analysis Results",
@@ -135,7 +142,7 @@ if uploaded_file is not None:
                     # Generative AI Analysis
                     st.subheader("Generative AI Analysis")
                     prompt = f"Create a creative story based on the following transcription: {transcription_text}"
-                    
+
                     # Let user decide if they want to use AI to generate a story
                     if st.button("Generate Story"):
                         try:
