@@ -1,12 +1,13 @@
 import streamlit as st
 import requests
 import wave
-from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
-import av
-import langid
-from sklearn.feature_extraction.text import CountVectorizer
-from wordcloud import WordCloud
+import io
+import sounddevice as sd
+import numpy as np
 import google.generativeai as genai
+from sklearn.feature_extraction.text import CountVectorizer
+import langid
+from wordcloud import WordCloud
 
 # Set up Hugging Face API details (for transcription)
 API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
@@ -70,63 +71,41 @@ def generate_word_cloud(text):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     return wordcloud
 
-# Custom audio processor to save audio frames
-class AudioProcessor(AudioProcessorBase):
-    def __init__(self) -> None:
-        self.frames = []
-    
-    def recv_audio(self, frame: av.AudioFrame) -> av.AudioFrame:
-        self.frames.append(frame)
-        return frame
+# Function to record audio using sounddevice
+def record_audio(duration, samplerate=44100):
+    st.write("Recording...")
+    audio_data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype='int16')
+    sd.wait()  # Wait until the recording is finished
+    return audio_data
 
 # Streamlit UI
 st.title("🎙️ Voice to Story Creator")
-st.write("Upload or record an audio file, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
+st.write("Record your audio directly, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
 
-# File uploader for audio files
-uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"])
+# User input to specify recording duration
+duration = st.slider("Select recording duration (seconds)", min_value=1, max_value=60, value=10)
 
-# Audio recording section
-st.subheader("Or record your audio")
-rtc_configuration = {
-    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-}
-
-webrtc_ctx = webrtc_streamer(
-    key="audio",
-    mode=WebRtcMode.SENDONLY,
-    rtc_configuration=rtc_configuration,
-    media_stream_constraints={"audio": True},
-    audio_processor_factory=AudioProcessor,
-)
-
-if webrtc_ctx.audio_processor:
-    audio_processor = webrtc_ctx.audio_processor
-    if st.button("Stop Recording"):
-        # Ensure audio frames are collected
-        if audio_processor.frames:
-            st.success(f"Captured {len(audio_processor.frames)} frames. Saving audio...")
-
-            # Save the recorded audio frames as a WAV file
-            with wave.open("recorded_audio.wav", "wb") as f:
-                f.setnchannels(1)  # Mono channel
-                f.setsampwidth(2)  # 16-bit depth
-                f.setframerate(44100)  # 44.1 kHz sample rate
-                for frame in audio_processor.frames:
-                    f.writeframes(frame.to_ndarray().tobytes())
-
-            uploaded_file = open("recorded_audio.wav", "rb")
-            st.audio(uploaded_file, format="audio/wav", start_time=0)
-            st.info("Audio saved successfully. Now processing the transcription...")
-
-# Handle uploaded audio file and transcription
-if uploaded_file is not None:
-    st.audio(uploaded_file, format="audio/mp3", start_time=0)
-    st.info("Transcribing audio... Please wait.")
+if st.button("Start Recording"):
+    # Record audio for the specified duration
+    audio_data = record_audio(duration)
     
-    # Transcribe the uploaded audio file
-    result = transcribe_audio(uploaded_file)
-    
+    # Save the audio data to a .wav file
+    wav_io = io.BytesIO()
+    with wave.open(wav_io, 'wb') as f:
+        f.setnchannels(1)  # Mono channel
+        f.setsampwidth(2)  # 16-bit depth
+        f.setframerate(44100)  # 44.1 kHz sample rate
+        f.writeframes(audio_data.tobytes())
+    wav_io.seek(0)
+
+    # Display recorded audio for playback
+    st.audio(wav_io, format="audio/wav", start_time=0)
+    st.info("Audio saved successfully. Now processing the transcription...")
+
+    # Send the recorded audio to the transcription API
+    result = transcribe_audio(wav_io)
+
+    # Display transcription result
     if "text" in result:
         st.success("Transcription Complete:")
         transcription_text = result["text"]
@@ -143,8 +122,8 @@ if uploaded_file is not None:
         st.write(keywords)
 
         # Speech Rate Calculation
-        file_path = "recorded_audio.wav"
-        duration_seconds = get_audio_duration(file_path)
+        wav_file_path = "recorded_audio.wav"
+        duration_seconds = get_audio_duration(wav_file_path)
         speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
         st.subheader("Speech Rate")
         st.write(f"Speech Rate: {speech_rate} words per minute")
