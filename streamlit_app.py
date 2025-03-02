@@ -103,16 +103,21 @@ webrtc_ctx = webrtc_streamer(
 if webrtc_ctx.audio_processor:
     audio_processor = webrtc_ctx.audio_processor
     if st.button("Stop Recording"):
-        audio_frames = audio_processor.frames
-        # Save the recorded audio frames as a WAV file
-        with wave.open("recorded_audio.wav", "wb") as f:
-            f.setnchannels(1)  # Mono channel
-            f.setsampwidth(2)  # 16-bit depth
-            f.setframerate(44100)  # 44.1 kHz sample rate
-            for frame in audio_frames:
-                f.writeframes(frame.to_ndarray().tobytes())
-        
-        uploaded_file = open("recorded_audio.wav", "rb")
+        # Ensure audio frames are collected
+        if audio_processor.frames:
+            st.success(f"Captured {len(audio_processor.frames)} frames. Saving audio...")
+
+            # Save the recorded audio frames as a WAV file
+            with wave.open("recorded_audio.wav", "wb") as f:
+                f.setnchannels(1)  # Mono channel
+                f.setsampwidth(2)  # 16-bit depth
+                f.setframerate(44100)  # 44.1 kHz sample rate
+                for frame in audio_processor.frames:
+                    f.writeframes(frame.to_ndarray().tobytes())
+
+            uploaded_file = open("recorded_audio.wav", "rb")
+            st.audio(uploaded_file, format="audio/wav", start_time=0)
+            st.info("Audio saved successfully. Now processing the transcription...")
 
 # Handle uploaded audio file and transcription
 if uploaded_file is not None:
