@@ -1,19 +1,20 @@
 import streamlit as st
+import google.generativeai as genai
 import requests
 from sklearn.feature_extraction.text import CountVectorizer
-import os
 import wave
-from collections import Counter
 import langid
 from wordcloud import WordCloud
-import google.generativeai as genai
-from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode, ClientSettings
+from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 import av
 
-# Set up Hugging Face API details
+# Set up Hugging Face API details (for transcription)
 API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
 API_TOKEN = st.secrets["HUGGINGFACE_API_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
+
+# Configure the generative AI API with your Google API key from Streamlit's secrets
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Function to send the audio file to the API
 def transcribe_audio(file):
@@ -167,8 +168,9 @@ if uploaded_file is not None:
         # Let user decide if they want to use AI to generate a story
         if st.button("Generate Story"):
             try:
-                # Load and configure the model
-                model = genai.GenerativeModel(model_name="text-davinci-003")  # Use OpenAI's GPT model
+                # Load and configure the model with Google's `gemini-1.5-flash`
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
                 # Generate response from the model
                 response = model.generate_content(prompt)
                 
