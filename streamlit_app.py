@@ -6,6 +6,7 @@ import wave
 import langid
 from wordcloud import WordCloud
 import io
+import time
 
 # Set up Hugging Face API details (for transcription)
 API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
@@ -70,9 +71,26 @@ st.markdown(
     .stButton>button {
         background-color: #00adb5;
         color: #ffffff;
+        border-radius: 8px;
+        transition: background-color 0.3s, transform 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #007b7f;
+        transform: scale(1.1);
     }
     .stFileUploader {
         border: 2px dashed #00adb5;
+        border-radius: 8px;
+        padding: 10px;
+    }
+    .stTextInput>div>input {
+        border-radius: 8px;
+    }
+    .stAlert {
+        font-size: 16px;
+    }
+    .stImage {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     </style>
     """,
@@ -103,87 +121,87 @@ if uploaded_file is not None:
             if duration_seconds > MAX_DURATION_SECONDS:
                 st.error(f"Error: Audio duration exceeds the 2-minute limit. Your audio is {duration_seconds:.2f} seconds.")
             else:
-                st.info("Transcribing audio... Please wait.")
+                # Add a loading animation while transcription happens
+                with st.spinner("Transcribing audio... Please wait."):
+                    # Transcribe the uploaded audio file
+                    result = transcribe_audio(uploaded_file)
 
-                # Transcribe the uploaded audio file
-                result = transcribe_audio(uploaded_file)
+                    # Display the result
+                    if "text" in result:
+                        st.success("Transcription Complete:")
+                        transcription_text = result["text"]
+                        st.write(transcription_text)
 
-                # Display the result
-                if "text" in result:
-                    st.success("Transcription Complete:")
-                    transcription_text = result["text"]
-                    st.write(transcription_text)
+                        # Language Detection
+                        lang, confidence = detect_language(transcription_text)
+                        st.subheader("Language Detection")
+                        st.write(f"Detected Language: {lang}, Confidence: {confidence}")
 
-                    # Language Detection
-                    lang, confidence = detect_language(transcription_text)
-                    st.subheader("Language Detection")
-                    st.write(f"Detected Language: {lang}, Confidence: {confidence}")
+                        # Keyword Extraction
+                        keywords = extract_keywords(transcription_text)
+                        st.subheader("Keyword Extraction")
+                        st.write(keywords)
 
-                    # Keyword Extraction
-                    keywords = extract_keywords(transcription_text)
-                    st.subheader("Keyword Extraction")
-                    st.write(keywords)
-
-                    # Speech Rate Calculation
-                    try:
-                        speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
-                        st.subheader("Speech Rate")
-                        st.write(f"Speech Rate: {speech_rate} words per minute")
-                    except ZeroDivisionError:
-                        st.error("Error: The duration of the audio is zero, which caused a division by zero error.")
-
-                    # Word Cloud Visualization
-                    wordcloud = generate_word_cloud(transcription_text)
-                    st.subheader("Word Cloud")
-                    st.image(wordcloud.to_array())
-
-                    # Add download button for the transcription text
-                    st.download_button(
-                        label="Download Transcription",
-                        data=transcription_text,
-                        file_name="transcription.txt",
-                        mime="text/plain"
-                    )
-
-                    # Add download button for analysis results
-                    analysis_results = f"""
-                    Language Detection:
-                    Detected Language: {lang}, Confidence: {confidence}
-                    
-                    Keyword Extraction:
-                    {keywords}
-                    
-                    Speech Rate: {speech_rate} words per minute
-                    """
-                    st.download_button(
-                        label="Download Analysis Results",
-                        data=analysis_results,
-                        file_name="analysis_results.txt",
-                        mime="text/plain"
-                    )
-
-                    # Generative AI Analysis
-                    st.subheader("Generative AI Analysis")
-                    prompt = f"Create a creative story based on the following transcription: {transcription_text}"
-
-                    # Let user decide if they want to use AI to generate a story
-                    if st.button("Generate Story"):
+                        # Speech Rate Calculation
                         try:
-                            # Load and configure the model with Google's gemini-1.5-flash
-                            model = genai.GenerativeModel('gemini-1.5-flash')
-                            
-                            # Generate response from the model
-                            response = model.generate_content(prompt)
-                            
-                            # Display response in Streamlit
-                            st.write("Generated Story:")
-                            st.write(response.text)
-                        except Exception as e:
-                            st.error(f"Error: {e}")
+                            speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
+                            st.subheader("Speech Rate")
+                            st.write(f"Speech Rate: {speech_rate} words per minute")
+                        except ZeroDivisionError:
+                            st.error("Error: The duration of the audio is zero, which caused a division by zero error.")
 
-                elif "error" in result:
-                    st.error(f"Error: {result['error']}")
-                else:
-                    st.warning("Unexpected response from the API.")
+                        # Word Cloud Visualization
+                        wordcloud = generate_word_cloud(transcription_text)
+                        st.subheader("Word Cloud")
+                        st.image(wordcloud.to_array(), use_column_width=True)
+
+                        # Add download button for the transcription text
+                        st.download_button(
+                            label="Download Transcription",
+                            data=transcription_text,
+                            file_name="transcription.txt",
+                            mime="text/plain"
+                        )
+
+                        # Add download button for analysis results
+                        analysis_results = f"""
+                        Language Detection:
+                        Detected Language: {lang}, Confidence: {confidence}
+                        
+                        Keyword Extraction:
+                        {keywords}
+                        
+                        Speech Rate: {speech_rate} words per minute
+                        """
+                        st.download_button(
+                            label="Download Analysis Results",
+                            data=analysis_results,
+                            file_name="analysis_results.txt",
+                            mime="text/plain"
+                        )
+
+                        # Generative AI Analysis
+                        st.subheader("Generative AI Analysis")
+                        prompt = f"Create a creative story based on the following transcription: {transcription_text}"
+
+                        # Let user decide if they want to use AI to generate a story
+                        if st.button("Generate Story"):
+                            try:
+                                # Load and configure the model with Google's gemini-1.5-flash
+                                model = genai.GenerativeModel('gemini-1.5-flash')
+                                
+                                # Generate response from the model
+                                response = model.generate_content(prompt)
+                                
+                                # Display response in Streamlit
+                                st.write("Generated Story:")
+                                st.write(response.text)
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+
+                    elif "error" in result:
+                        st.error(f"Error: {result['error']}")
+                    else:
+                        st.warning("Unexpected response from the API.")
     except Exception as e:
         st.error(f"Error processing the audio file: {e}")
