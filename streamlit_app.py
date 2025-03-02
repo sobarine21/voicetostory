@@ -1,12 +1,12 @@
 import streamlit as st
-import google.generativeai as genai
 import requests
-from sklearn.feature_extraction.text import CountVectorizer
 import wave
-import langid
-from wordcloud import WordCloud
 from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 import av
+import langid
+from sklearn.feature_extraction.text import CountVectorizer
+from wordcloud import WordCloud
+import google.generativeai as genai
 
 # Set up Hugging Face API details (for transcription)
 API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
@@ -16,17 +16,32 @@ HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
 # Configure the generative AI API with your Google API key from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# Function to send the audio file to the API
+# Function to send the audio file to the API for transcription
 def transcribe_audio(file):
     try:
         data = file.read()
         response = requests.post(API_URL, headers=HEADERS, data=data)
         if response.status_code == 200:
-            return response.json()  # Return transcription
+            result = response.json()
+            if "text" in result:
+                return result  # Return transcription text
+            else:
+                return {"error": f"API response did not contain 'text': {response.text}"}
         else:
             return {"error": f"API Error: {response.status_code} - {response.text}"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Exception occurred: {str(e)}"}
+
+# Function to calculate duration of audio file in seconds
+def get_audio_duration(file_path):
+    try:
+        with wave.open(file_path, 'rb') as f:
+            frames = f.getnframes()
+            rate = f.getframerate()
+            duration = frames / float(rate)
+            return duration
+    except Exception as e:
+        return 0  # If error occurs, assume zero duration
 
 # Function for keyword extraction using CountVectorizer
 def extract_keywords(text):
@@ -50,7 +65,7 @@ def calculate_speech_rate(text, duration_seconds):
         speech_rate = 0
     return speech_rate
 
-# Function to generate a word cloud
+# Function to generate a word cloud from text
 def generate_word_cloud(text):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     return wordcloud
@@ -68,10 +83,10 @@ class AudioProcessor(AudioProcessorBase):
 st.title("🎙️ Voice to Story Creator")
 st.write("Upload or record an audio file, and this app will transcribe it using OpenAI Whisper via Hugging Face API. It will then perform various analyses and generate a creative story or novel.")
 
-# File uploader
+# File uploader for audio files
 uploaded_file = st.file_uploader("Upload your audio file (e.g., .wav, .flac, .mp3)", type=["wav", "flac", "mp3"])
 
-# Audio recording
+# Audio recording section
 st.subheader("Or record your audio")
 rtc_configuration = {
     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
@@ -89,24 +104,24 @@ if webrtc_ctx.audio_processor:
     audio_processor = webrtc_ctx.audio_processor
     if st.button("Stop Recording"):
         audio_frames = audio_processor.frames
+        # Save the recorded audio frames as a WAV file
         with wave.open("recorded_audio.wav", "wb") as f:
-            # Set parameters for the wave file (e.g., mono channel, 16-bit depth, 44.1 kHz)
-            f.setnchannels(1)
+            f.setnchannels(1)  # Mono channel
             f.setsampwidth(2)  # 16-bit depth
-            f.setframerate(44100)
+            f.setframerate(44100)  # 44.1 kHz sample rate
             for frame in audio_frames:
                 f.writeframes(frame.to_ndarray().tobytes())
+        
         uploaded_file = open("recorded_audio.wav", "rb")
 
+# Handle uploaded audio file and transcription
 if uploaded_file is not None:
-    # Display uploaded audio
     st.audio(uploaded_file, format="audio/mp3", start_time=0)
     st.info("Transcribing audio... Please wait.")
     
     # Transcribe the uploaded audio file
     result = transcribe_audio(uploaded_file)
     
-    # Display the result
     if "text" in result:
         st.success("Transcription Complete:")
         transcription_text = result["text"]
@@ -123,20 +138,18 @@ if uploaded_file is not None:
         st.write(keywords)
 
         # Speech Rate Calculation
-        try:
-            duration_seconds = len(uploaded_file.read()) / (44100 * 2)  # Assuming 44.1kHz sample rate and 16-bit samples
-            speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
-            st.subheader("Speech Rate")
-            st.write(f"Speech Rate: {speech_rate} words per minute")
-        except ZeroDivisionError:
-            st.error("Error: The duration of the audio is zero, which caused a division by zero error.")
+        file_path = "recorded_audio.wav"
+        duration_seconds = get_audio_duration(file_path)
+        speech_rate = calculate_speech_rate(transcription_text, duration_seconds)
+        st.subheader("Speech Rate")
+        st.write(f"Speech Rate: {speech_rate} words per minute")
 
         # Word Cloud Visualization
         wordcloud = generate_word_cloud(transcription_text)
         st.subheader("Word Cloud")
         st.image(wordcloud.to_array())
 
-        # Add download button for the transcription text
+        # Add download button for the transcription
         st.download_button(
             label="Download Transcription",
             data=transcription_text,
