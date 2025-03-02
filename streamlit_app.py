@@ -56,6 +56,29 @@ def generate_word_cloud(text):
 
 # Streamlit UI
 st.set_page_config(page_title="🎙️ Voice to Story Creator", layout="wide")
+st.markdown(
+    """
+    <style>
+    .main {
+        background: #0e1117;
+        color: #ffffff;
+    }
+    h1 {
+        color: #00adb5;
+        text-align: center;
+    }
+    .stButton>button {
+        background-color: #00adb5;
+        color: #ffffff;
+    }
+    .stFileUploader {
+        border: 2px dashed #00adb5;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🎙️ Voice to Story Creator")
 st.write("Upload an audio file (e.g., .wav, .flac, .mp3), and this app will transcribe it using OpenAI Whisper via Hugging Face API. Then, perform various analyses and generate a creative story.")
 
