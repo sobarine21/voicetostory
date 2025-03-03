@@ -272,5 +272,16 @@ if uploaded_file is not None:
                                         st.write(response.text)
                                     except Exception as e:
                                         st.error(f"Error: {e}")
+
         except Exception as e:
             st.error(f"Error processing the audio file: {e}")
+
+# Add a clickable link for the Google Form to get access to pro model without any limits
+st.markdown(
+    """
+    ### Get access to the pro model without any limits
+    To gain unlimited access to the pro model, please fill out the form below:
+    [Fill out the form here](https://forms.gle/khLL6UGTFLU5nQWLA)
+    """,
+    unsafe_allow_html=True
+)
