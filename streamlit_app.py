@@ -147,9 +147,6 @@ st.markdown("""
     </p>
 """, unsafe_allow_html=True)
 
-# File uploader with file size limit (2 mins of audio)
-uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
-
 
 # File uploader with file size limit (2 mins of audio)
 uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
