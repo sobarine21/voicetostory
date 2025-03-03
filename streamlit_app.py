@@ -76,13 +76,14 @@ st.markdown(
         background-color: #00adb5;
         color: #ffffff;
         border-radius: 8px;
-        transition: background-color 0.3s, transform 0.3s;
+        transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
         padding: 12px 20px;
         font-size: 18px;
     }
     .stButton>button:hover {
         background-color: #007b7f;
         transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     .stFileUploader {
         border: 2px dashed #00adb5;
@@ -110,6 +111,7 @@ st.markdown(
     }
     .stProgress {
         background-color: #00adb5;
+        transition: width 0.3s ease;
     }
     @keyframes fadeIn {
         from { opacity: 0; }
@@ -126,7 +128,7 @@ st.markdown(
 
 # App Title
 st.title("🎙️ Voice to Story Creator")
-st.write("Turn voice notes into AI generated stories powered by OpenAI-whisper and Google generative AI.")
+st.write("Turn voice notes into AI-generated stories powered by OpenAI-whisper and Google generative AI.")
 
 # Add custom CSS to hide the header and the top-right buttons
 hide_streamlit_style = """
@@ -139,14 +141,6 @@ hide_streamlit_style = """
     </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# Link to request access to the pro model
-st.markdown("""
-    <p style="text-align: center;">
-        Need access to the pro model? <a href="https://forms.gle/gCtPcDnnSbrKGrao6" target="_blank" style="color: #00adb5; font-weight: bold;">Request access to pro model</a>
-    </p>
-""", unsafe_allow_html=True)
-
 
 # File uploader with file size limit (2 mins of audio)
 uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
