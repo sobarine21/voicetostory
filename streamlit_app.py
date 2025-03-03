@@ -140,6 +140,17 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# Link to request access to the pro model
+st.markdown("""
+    <p style="text-align: center;">
+        Need access to the pro model? <a href="https://forms.gle/gCtPcDnnSbrKGrao6" target="_blank" style="color: #00adb5; font-weight: bold;">Request access to pro model</a>
+    </p>
+""", unsafe_allow_html=True)
+
+# File uploader with file size limit (2 mins of audio)
+uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
+
+
 # File uploader with file size limit (2 mins of audio)
 uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minutes)", type=["wav", "flac", "mp3"])
 
