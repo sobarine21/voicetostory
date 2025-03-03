@@ -134,7 +134,7 @@ st.markdown(
 
 # App Title
 st.title("🎙️ Voice to Story Creator")
-st.write("Turn voice notes into AI-generated stories powered by OpenAI-whisper and Google generative AI.")
+st.write("Turn voice notes into AI-generated stories powered by audi transcriptions, NLP & generative AI.")
 
 # Add custom CSS to hide the header and the top-right buttons
 hide_streamlit_style = """
