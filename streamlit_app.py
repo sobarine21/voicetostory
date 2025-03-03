@@ -19,8 +19,8 @@ genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Constants for rate limiting
 MAX_DURATION_SECONDS = 120  # Max duration for the uploaded file (2 minutes)
-USER_ACTION_LIMIT = 5  # Limit the number of user actions per session (e.g., file uploads)
-COOLDOWN_PERIOD = 60  # Cooldown period in seconds (e.g., 1 minute between uploads)
+USER_ACTION_LIMIT = 2  # Limit the number of user actions per 10 minutes
+RATE_LIMIT_PERIOD = 600  # 10 minutes in seconds (600 seconds)
 
 # Function to send the audio file to the API for transcription
 def transcribe_audio(file):
@@ -149,25 +149,24 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Check if we are in session state
-if 'last_upload_time' not in st.session_state:
-    st.session_state.last_upload_time = datetime.datetime.now()
-    st.session_state.upload_count = 0
+if 'last_action_time' not in st.session_state:
+    st.session_state.last_action_time = datetime.datetime.now()
+    st.session_state.action_count = 0
 
 # Function to check rate limit
 def check_rate_limit():
     current_time = datetime.datetime.now()
-    time_diff = (current_time - st.session_state.last_upload_time).total_seconds()
+    time_diff = (current_time - st.session_state.last_action_time).total_seconds()
 
-    if time_diff < COOLDOWN_PERIOD:
-        remaining_time = COOLDOWN_PERIOD - time_diff
-        st.warning(f"Please wait {int(remaining_time)} seconds before uploading again.")
+    if time_diff < RATE_LIMIT_PERIOD and st.session_state.action_count >= USER_ACTION_LIMIT:
+        remaining_time = RATE_LIMIT_PERIOD - time_diff
+        st.warning(f"Please wait {int(remaining_time)} seconds before making another request.")
         return False
     
-    # Reset upload count if cooldown period is over
-    if st.session_state.upload_count >= USER_ACTION_LIMIT:
-        st.warning("You have reached the upload limit for this session. Please try again later.")
-        return False
-    
+    # Reset action count if rate limit period is over
+    if time_diff >= RATE_LIMIT_PERIOD:
+        st.session_state.action_count = 0
+
     return True
 
 # File uploader with file size limit (2 mins of audio)
@@ -176,8 +175,8 @@ uploaded_file = st.file_uploader("Upload your audio file (max duration: 2 minute
 if uploaded_file is not None:
     # Check rate limit before allowing file upload
     if check_rate_limit():
-        st.session_state.upload_count += 1
-        st.session_state.last_upload_time = datetime.datetime.now()
+        st.session_state.action_count += 1
+        st.session_state.last_action_time = datetime.datetime.now()
 
         # Display uploaded audio
         st.audio(uploaded_file, format="audio/mp3", start_time=0)
